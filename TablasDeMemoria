@@ -1,0 +1,54 @@
+9.- Leer los departamentos insertados en el ejercicio anterior (8) en una tabla de memoria.
+    Después, mostrar por pantalla los datos de la tabla de memoria leyéndolos uno a uno. 
+
+DECLARE
+  TYPE dept_mem_type IS TABLE OF tdepta%ROWTYPE
+     INDEX BY PLS_INTEGER;
+  tabla_memoria  dept_mem_type;
+  v_contador    NUMBER(3) := 10; 
+BEGIN
+   SELECT NUMDEP, NOMDEP, NUMDIREC 
+   BULK COLLECT INTO tabla_memoria 
+   FROM TDEPTA
+   WHERE NOMDEP LIKE 'FICTI%'; 
+   FOR i IN tabla_memoria.FIRST.. tabla_memoria.LAST LOOP
+       DBMS_OUTPUT.PUT_LINE(tabla_memoria(i).NUMDEP || ', ' ||
+            tabla_memoria(i).NOMDEP || ', ' ||    
+            tabla_memoria(i).NUMDIREC );
+   END LOOP;
+END;
+
+------------------------------------------------------------------
+10.- Crear una función que devuelva un cursor que lea los empleados de un departamento.
+    La función acepta como parámetro el código de departamento y devuelve un cursor
+    en el que se leen nombre y salario.
+
+CREATE OR REPLACE FUNCTION Leer_Empleados(v_dept char)
+  RETURN SYS_REFCURSOR
+AS
+  c_emple SYS_REFCURSOR;
+BEGIN
+  OPEN c_emple FOR SELECT nombre, salario FROM TEMPLA WHERE DEPT = v_dept;
+  RETURN c_emple;
+END Leer_Empleados; 
+
+--------------------------------------------------------------------------
+11.- Desde un procedimiento, llamar a la función anterior, recoger el cursor abierto y 
+    procesarlo, mostrando el nombre y salario de los empleados que nos proporciona el 
+    cursor.
+
+declare 
+ c_emp sys_refcursor; 
+ v_nombre     templa.nombre%type;
+ v_salario    templa.salario%type;
+begin
+  c_emp := Leer_Empleados('D11');
+  dbms_output.put_line('Filas leidas: '|| c_emp%ROWCOUNT);
+  loop 
+    fetch c_emp into v_nombre, v_salario;
+    exit when c_emp%NOTFOUND;
+    dbms_output.put_line('Filas leidas: '|| c_emp%ROWCOUNT);
+    dbms_output.put_line(v_nombre || ' gana : ' || v_salario);
+  end loop;
+  close c_emp;
+end;
